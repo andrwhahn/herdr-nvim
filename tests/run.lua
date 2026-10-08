@@ -12,6 +12,10 @@ function T.eq(actual, expected, msg)
 end
 function T.ok(cond, msg) if not cond then error(msg or "expected truthy", 2) end end
 
+-- Tests opt into tmux explicitly; don't let the shell running them (which may
+-- itself be inside tmux) switch the herdr tests onto the tmux backend.
+vim.env.TMUX = nil
+
 local files = vim.fn.glob(root .. "/tests/test_*.lua", false, true)
 for _, f in ipairs(files) do dofile(f) end
 

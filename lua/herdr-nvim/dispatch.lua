@@ -3,6 +3,9 @@ local exec_mod = require("herdr-nvim.exec")
 
 function M.send(pane_id, text, opts, exec)
   opts = opts or {}
+  if require("herdr-nvim.tmux").active() then
+    return require("herdr-nvim.tmux").send(pane_id, text, opts, exec)
+  end
   exec = exec or exec_mod.default_exec
   if opts.submit then
     -- agent prompt sends text and auto-submits (presses Enter for you)

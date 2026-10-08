@@ -2,6 +2,9 @@ local M = {}
 local exec_mod = require("herdr-nvim.exec")
 
 function M.list(exec)
+  if require("herdr-nvim.tmux").active() then
+    return require("herdr-nvim.tmux").list(exec)
+  end
   exec = exec or exec_mod.default_exec
   local r = exec({ "herdr", "agent", "list" })
   if r.code ~= 0 then
@@ -35,9 +38,11 @@ end
 --      same convention the file picker uses to find "the agent in this tab";
 --   2. otherwise, a lone agent in the workspace.
 -- Anything ambiguous (2+ candidates) returns nil so the caller shows the picker.
-function M.resolve(list)
+function M.resolve(list, exec)
   if #list == 1 then return list[1] end
+  local tmux = require("herdr-nvim.tmux")
   local tab = vim.env.HERDR_TAB_ID
+  if tmux.active() then tab = tmux.current_tab(exec) end
   if tab then
     local in_tab = {}
     for _, a in ipairs(list) do
@@ -50,6 +55,10 @@ end
 
 function M.display(agent)
   local tail = vim.fn.fnamemodify(agent.cwd, ":t")
+  if agent.status == "unknown" then
+    -- tmux reports no agent state; show where it runs instead.
+    return string.format("%s · %s · %s", agent.kind, agent.title, tail)
+  end
   -- Lead with the agent kind (pi/claude/codex…) — the actual agent identity —
   -- then its state and where it's running. (The terminal title tended to just
   -- repeat the workspace/repo name shown by the cwd tail.)
